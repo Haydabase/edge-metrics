@@ -1,0 +1,93 @@
+# NOTE: verify this CRD's exact field paths against the Envoy Gateway version
+# pinned in `just demo` — the telemetry/accessLog API has moved across
+# releases. `host`/`port` here must match the collector's otlp/envoy
+# receiver (see otel-collector-config.yaml's `receivers.otlp/envoy`), which
+# needs no changes of its own to receive from Envoy Gateway.
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: paybybank-gw-proxy
+  namespace: api-gateway
+spec:
+  provider:
+    type: Kubernetes
+    kubernetes:
+      envoyDeployment:
+        replicas: 1
+  telemetry:
+    accessLog:
+      settings:
+        - format:
+            type: JSON
+            json:
+              # Fields consumed by attributes/envoy / transform/envoy (see otel-collector-config.yaml)
+              requested_server_name: "%REQ(:authority)%" # Use authority for demo, as need to use the Host header value
+              method: "%REQ(:METHOD)%"
+              path: "%PATH(NQ:ORIG_OR_PATH)%"
+              start_time: "%START_TIME%"
+              duration: "%DURATION%"
+              time_to_first_byte_ms: "%COMMON_DURATION(DS_RX_BEG:DS_TX_BEG:ms)%"
+              response_code: "%RESPONSE_CODE%"
+              user-agent: "%REQ(USER-AGENT)%"
+              cf-ray: "%REQ(CF-RAY)%"
+              pbb-meta: "%RESP(PBB-META)%"
+              # Direct pass-through fields: not consumed by any processor, kept for raw log/debugging value
+              real_requested_server_name: "%REQUESTED_SERVER_NAME%" # SNI value is always "-" on demo's plain-HTTP listener
+              protocol: "%PROTOCOL%"
+              response_flags: "%RESPONSE_FLAGS%"
+              response_code_details: "%RESPONSE_CODE_DETAILS%"
+              connection_termination_details: "%CONNECTION_TERMINATION_DETAILS%"
+              upstream_transport_failure_reason: "%UPSTREAM_TRANSPORT_FAILURE_REASON%"
+              bytes_received: "%BYTES_RECEIVED%"
+              bytes_sent: "%BYTES_SENT%"
+              upstream_host: "%UPSTREAM_HOST%"
+              upstream_cluster: "%UPSTREAM_CLUSTER%"
+              upstream_local_address: "%UPSTREAM_LOCAL_ADDRESS%"
+              downstream_local_address: "%DOWNSTREAM_LOCAL_ADDRESS%"
+              downstream_remote_address: "%DOWNSTREAM_REMOTE_ADDRESS%"
+              route_name: "%ROUTE_NAME%"
+              downstream_peer_issuer: "%DOWNSTREAM_PEER_ISSUER%"
+              downstream_peer_subject: "%DOWNSTREAM_PEER_SUBJECT%"
+              downstream_peer_fingerprint_256: "%DOWNSTREAM_PEER_FINGERPRINT_256%"
+              downstream_tls_cipher: "%DOWNSTREAM_TLS_CIPHER%"
+              downstream_tls_version: "%DOWNSTREAM_TLS_VERSION%"
+              response_duration_ms: "%RESPONSE_DURATION%"
+              request_duration_ms: "%REQUEST_DURATION%"
+              upstream_tls_cipher: "%UPSTREAM_TLS_CIPHER%"
+              upstream_tls_version: "%UPSTREAM_TLS_VERSION%"
+          sinks:
+            - type: OpenTelemetry
+              openTelemetry:
+                host: edge-metrics-opentelemetry-collector.edge-metrics.svc.cluster.local
+                port: 14317
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: paybybank-gw
+  namespace: api-gateway
+spec:
+  gatewayClassName: edge-metrics-eg
+  infrastructure:
+    parametersRef:
+      group: gateway.envoyproxy.io
+      kind: EnvoyProxy
+      name: paybybank-gw-proxy
+  listeners:
+    # A single HTTP listener handles both the "TLS" (api.paybybank.example)
+    # and illustrative "mTLS" (api.mtls.paybybank.example) demo hostnames —
+    # real mTLS termination is Envoy Gateway's own feature and out of scope
+    # for what this repo demonstrates (see README's architecture section).
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        # The Gateway lives in api-gateway, but HTTPRoutes live alongside
+        # their backends in applications — attach cross-namespace via a
+        # selector on the built-in kubernetes.io/metadata.name label, rather
+        # than the broader (and here, unnecessary) `from: All`.
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              kubernetes.io/metadata.name: applications

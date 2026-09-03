@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>edge-metrics demo</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
+  h1 { font-size: 1.4rem; }
+  p.sub { opacity: 0.75; margin-top: -0.5rem; }
+  fieldset { border: 1px solid #8884; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+  label { display: block; margin-bottom: 0.5rem; }
+  select, button { font-size: 1rem; padding: 0.4rem 0.6rem; }
+  button { cursor: pointer; }
+  #result { white-space: pre-wrap; font-family: ui-monospace, monospace; background: #8882; border-radius: 8px; padding: 1rem; min-height: 3rem; }
+  .hint { font-size: 0.85rem; opacity: 0.75; margin-top: 0.5rem; }
+  .hint a { color: inherit; }
+</style>
+</head>
+<body>
+  <h1>edge-metrics demo</h1>
+  <p class="sub">Send a real request through Envoy Gateway to one of the demo services.</p>
+
+  <fieldset>
+    <label for="route">Route</label>
+    <select id="route">
+      <option value="api|/payments">Payments — api.paybybank.example/payments</option>
+      <option value="api|/connected-accounts">Connected Accounts — api.paybybank.example/connected-accounts</option>
+      <option value="api|/data-connections">Data Connections — api.paybybank.example/data-connections</option>
+      <option value="api|/payouts">Payouts — api.paybybank.example/payouts</option>
+      <option value="api.mtls|/payments">Payments (mTLS) — api.mtls.paybybank.example/payments</option>
+      <option value="auth|/connect/token">Auth — auth.paybybank.example/connect/token</option>
+      <option value="auth.mtls|/connect/token">Auth (mTLS) — auth.mtls.paybybank.example/connect/token</option>
+    </select>
+    <button id="send">Send request</button>
+  </fieldset>
+
+  <div id="result">Pick a route and hit "Send request".</div>
+  <p class="hint">
+    Non-mTLS routes also simulate the matching Cloudflare Logpush push for the same request
+    (see <code>demo-ui/server.mjs</code>) — check Grafana Explore (Loki) and the Edge Metrics
+    dashboard at <a href="http://localhost:3000" target="_blank">localhost:3000</a> to see both
+    logs land, categorized.
+  </p>
+
+  <script>
+    const routeSelect = document.getElementById("route");
+    const sendButton = document.getElementById("send");
+    const result = document.getElementById("result");
+
+    sendButton.addEventListener("click", async () => {
+      const [subdomain, path] = routeSelect.value.split("|");
+      result.textContent = "Sending...";
+      try {
+        const res = await fetch(`/${subdomain}${path}`, { method: "GET" });
+        const body = await res.json();
+        result.textContent = JSON.stringify(body, null, 2);
+      } catch (err) {
+        result.textContent = `Request to relay failed: ${err.message}`;
+      }
+    });
+  </script>
+</body>
+</html>

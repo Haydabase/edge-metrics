@@ -1,0 +1,82 @@
+{
+  "resourceLogs": [
+    {
+      "resource": {},
+      "scopeLogs": [
+        {
+          "scope": {},
+          "logRecords": [
+            {
+              "timeUnixNano": "1704067200000000000",
+              "body": {
+                "stringValue": "HTTP request"
+              },
+              "attributes": [
+                {
+                  "key": "ClientRequestSource",
+                  "value": {
+                    "stringValue": "eyeball"
+                  }
+                },
+                {
+                  "key": "ClientRequestHost",
+                  "value": {
+                    "stringValue": "auth.paybybank.example"
+                  }
+                },
+                {
+                  "key": "ClientRequestPath",
+                  "value": {
+                    "stringValue": "/connect/token"
+                  }
+                },
+                {
+                  "key": "ClientRequestMethod",
+                  "value": {
+                    "stringValue": "POST"
+                  }
+                },
+                {
+                  "key": "EdgeResponseStatus",
+                  "value": {
+                    "doubleValue": 200
+                  }
+                },
+                {
+                  "key": "EdgeStartTimestamp",
+                  "value": {
+                    "doubleValue": 1704067200000000000
+                  }
+                },
+                {
+                  "key": "EdgeEndTimestamp",
+                  "value": {
+                    "doubleValue": 1704067200150000000
+                  }
+                },
+                {
+                  "key": "EdgeTimeToFirstByteMs",
+                  "value": {
+                    "doubleValue": 125
+                  }
+                },
+                {
+                  "key": "ClientRequestUserAgent",
+                  "value": {
+                    "stringValue": "DemoClient-SDK/1.0"
+                  }
+                },
+                {
+                  "key": "RayID",
+                  "value": {
+                    "stringValue": "cloudflare-basic"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

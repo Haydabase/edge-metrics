@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: connections-api
+  namespace: applications
+  labels:
+    app.kubernetes.io/name: connections-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: connections-api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: connections-api
+    spec:
+      containers:
+        - name: http-echo
+          image: hashicorp/http-echo:1.0
+          args:
+            - -text=connections-api
+          ports:
+            - containerPort: 5678
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 50m
+              memory: 32Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: connections-api
+  namespace: applications
+  labels:
+    app.kubernetes.io/name: connections-api
+spec:
+  selector:
+    app.kubernetes.io/name: connections-api
+  ports:
+    - port: 80
+      targetPort: 5678
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: connections-api
+  namespace: applications
+  annotations:
+    sli.paybybank.example/product: Data
+spec:
+  parentRefs:
+    - name: paybybank-gw
+      namespace: api-gateway
+  hostnames:
+    - api.paybybank.example
+    - api.mtls.paybybank.example
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /data-connections
+      backendRefs:
+        - name: connections-api
+          port: 80

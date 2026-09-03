@@ -1,0 +1,88 @@
+{
+  "resourceLogs": [
+    {
+      "resource": {},
+      "scopeLogs": [
+        {
+          "scope": {},
+          "logRecords": [
+            {
+              "timeUnixNano": "1704067200000000000",
+              "body": {
+                "stringValue": "Envoy HTTP request"
+              },
+              "attributes": [
+                {
+                  "key": "requested_server_name",
+                  "value": {
+                    "stringValue": "api.mtls.paybybank.example"
+                  }
+                },
+                {
+                  "key": "path",
+                  "value": {
+                    "stringValue": "/payments/619305e1-7fca-4a1f-b7a2-3197e5e2c1b0"
+                  }
+                },
+                {
+                  "key": "method",
+                  "value": {
+                    "stringValue": "GET"
+                  }
+                },
+                {
+                  "key": "response_code",
+                  "value": {
+                    "stringValue": "200"
+                  }
+                },
+                {
+                  "key": "start_time",
+                  "value": {
+                    "stringValue": "2024-01-01T00:00:00.000Z"
+                  }
+                },
+                {
+                  "key": "duration",
+                  "value": {
+                    "stringValue": "150"
+                  }
+                },
+                {
+                  "key": "time_to_first_byte_ms",
+                  "value": {
+                    "stringValue": "125"
+                  }
+                },
+                {
+                  "key": "user-agent",
+                  "value": {
+                    "stringValue": "TestClient/1.0"
+                  }
+                },
+                {
+                  "key": "cf-ray",
+                  "value": {
+                    "stringValue": "envoy-ext-latency-none"
+                  }
+                },
+                {
+                  "key": "pbb-client-id",
+                  "value": {
+                    "stringValue": "-"
+                  }
+                },
+                {
+                  "key": "pbb-meta",
+                  "value": {
+                    "stringValue": "-"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

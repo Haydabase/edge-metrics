@@ -1,0 +1,256 @@
+{
+  "resourceLogs": [
+    {
+      "resource": {},
+      "scopeLogs": [
+        {
+          "scope": {},
+          "logRecords": [
+            {
+              "timeUnixNano": "1704067200000000000",
+              "body": {
+                "stringValue": "HTTP request with headers"
+              },
+              "attributes": [
+                {
+                  "key": "ClientRequestSource",
+                  "value": {
+                    "stringValue": "eyeball"
+                  }
+                },
+                {
+                  "key": "ClientRequestHost",
+                  "value": {
+                    "stringValue": "api.paybybank.example"
+                  }
+                },
+                {
+                  "key": "ClientRequestPath",
+                  "value": {
+                    "stringValue": "/payments/619305e1-7fca-4a1f-b7a2-3197e5e2c1b0"
+                  }
+                },
+                {
+                  "key": "ClientRequestMethod",
+                  "value": {
+                    "stringValue": "GET"
+                  }
+                },
+                {
+                  "key": "EdgeResponseStatus",
+                  "value": {
+                    "doubleValue": 502
+                  }
+                },
+                {
+                  "key": "EdgeStartTimestamp",
+                  "value": {
+                    "doubleValue": 1704067200000000000
+                  }
+                },
+                {
+                  "key": "EdgeEndTimestamp",
+                  "value": {
+                    "doubleValue": 1704067200250000000
+                  }
+                },
+                {
+                  "key": "EdgeTimeToFirstByteMs",
+                  "value": {
+                    "doubleValue": 200
+                  }
+                },
+                {
+                  "key": "ClientRequestUserAgent",
+                  "value": {
+                    "stringValue": "DemoClient-SDK/2.0"
+                  }
+                },
+                {
+                  "key": "RayID",
+                  "value": {
+                    "stringValue": "cloudflare-with-headers"
+                  }
+                },
+                {
+                  "key": "RequestHeaders.pbb_client_id",
+                  "value": {
+                    "stringValue": "test-client-123"
+                  }
+                },
+                {
+                  "key": "ResponseHeaders.pbb_meta",
+                  "value": {
+                    "stringValue": "eyJwYmItY2xpZW50LWlkIjoidGVzdC1jbGllbnQtNDU2IiwicGJiLmxhdGVuY3kuZXh0ZXJuYWxfZGVwZW5kZW5jeV9tcyI6MTAwLCJlcnJvci5wYmIuc2xpX3R5cGUiOiJleHRlcm5hbF9kZXBlbmRlbmN5X2Vycm9yIn0="
+                  }
+                },
+                {
+                  "key": "pbb.ingress.layer",
+                  "value": {
+                    "stringValue": "cloudflare"
+                  }
+                },
+                {
+                  "key": "url.host",
+                  "value": {
+                    "stringValue": "api.paybybank.example"
+                  }
+                },
+                {
+                  "key": "http.request.method",
+                  "value": {
+                    "stringValue": "GET"
+                  }
+                },
+                {
+                  "key": "url.path",
+                  "value": {
+                    "stringValue": "/payments/619305e1-7fca-4a1f-b7a2-3197e5e2c1b0"
+                  }
+                },
+                {
+                  "key": "http.response.status_code",
+                  "value": {
+                    "intValue": "502"
+                  }
+                },
+                {
+                  "key": "user_agent.original",
+                  "value": {
+                    "stringValue": "DemoClient-SDK/2.0"
+                  }
+                },
+                {
+                  "key": "pbb.latency.time_to_first_byte_ms",
+                  "value": {
+                    "intValue": "200"
+                  }
+                },
+                {
+                  "key": "cf.ray_id",
+                  "value": {
+                    "stringValue": "cloudflare-with-headers"
+                  }
+                },
+                {
+                  "key": "http.request.received_at",
+                  "value": {
+                    "stringValue": "2024-01-01T00:00:00Z"
+                  }
+                },
+                {
+                  "key": "http.response.sent_at",
+                  "value": {
+                    "stringValue": "2024-01-01T00:00:00.249Z"
+                  }
+                },
+                {
+                  "key": "pbb.latency.duration_ms",
+                  "value": {
+                    "intValue": "249"
+                  }
+                },
+                {
+                  "key": "pbb.app.latency.external_dependency_ms",
+                  "value": {
+                    "intValue": "100"
+                  }
+                },
+                {
+                  "key": "http.response.headers.pbb-meta.decoded",
+                  "value": {
+                    "stringValue": "{\"pbb-client-id\":\"test-client-456\",\"pbb.latency.external_dependency_ms\":100,\"error.pbb.sli_type\":\"external_dependency_error\"}"
+                  }
+                },
+                {
+                  "key": "pbb.app.error.sli_type",
+                  "value": {
+                    "stringValue": "external_dependency_error"
+                  }
+                },
+                {
+                  "key": "pbb.app.client.id",
+                  "value": {
+                    "stringValue": "test-client-456"
+                  }
+                },
+                {
+                  "key": "pbb.ingress.tls_type",
+                  "value": {
+                    "stringValue": "non-mtls"
+                  }
+                },
+                {
+                  "key": "pbb.domain",
+                  "value": {
+                    "stringValue": "api.paybybank.example"
+                  }
+                },
+                {
+                  "key": "pbb.sub_domain",
+                  "value": {
+                    "stringValue": "api"
+                  }
+                },
+                {
+                  "key": "http.route",
+                  "value": {
+                    "stringValue": "/payments/{id}"
+                  }
+                },
+                {
+                  "key": "pbb.operation",
+                  "value": {
+                    "stringValue": "GET /payments/{id}"
+                  }
+                },
+                {
+                  "key": "error.pbb.sli_type",
+                  "value": {
+                    "stringValue": "external_dependency_error"
+                  }
+                },
+                {
+                  "key": "pbb.client.id",
+                  "value": {
+                    "stringValue": "test-client-456"
+                  }
+                },
+                {
+                  "key": "pbb.latency.external_dependency_ms",
+                  "value": {
+                    "intValue": "100"
+                  }
+                },
+                {
+                  "key": "pbb.latency.paybybank_ms",
+                  "value": {
+                    "intValue": "149"
+                  }
+                },
+                {
+                  "key": "pbb.latency.paybybank_time_to_first_byte_ms",
+                  "value": {
+                    "intValue": "100"
+                  }
+                },
+                {
+                  "key": "pbb.product",
+                  "value": {
+                    "stringValue": "Payments"
+                  }
+                },
+                {
+                  "key": "pbb.service.name",
+                  "value": {
+                    "stringValue": "payments-api"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

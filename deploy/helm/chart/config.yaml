@@ -1,0 +1,4 @@
+values_filepaths:
+- values.yaml
+- otel-chart-overrides.yaml
+- otel-config.yaml

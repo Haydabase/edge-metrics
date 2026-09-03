@@ -1,0 +1,29 @@
+receivers:
+  # OTLP receiver for Cloudflare test logs
+  otlp/cloudflare:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4315
+        cors:
+          allowed_origins:
+            - "*"
+  # OTLP receiver for Envoy test logs
+  otlp/envoy:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4316
+        cors:
+          allowed_origins:
+            - "*"
+
+exporters:
+  # File exporter for edge logs (for test assertions)
+  file/edge:
+    path: /output/edge.jsonl
+
+service:
+  pipelines:
+    logs/cloudflare:
+      receivers: [otlp/cloudflare]
+    logs/edge:
+      exporters: [file/edge]

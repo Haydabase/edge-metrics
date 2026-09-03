@@ -1,0 +1,222 @@
+global:
+  namespace: edge-metrics
+
+opentelemetry-collector:
+  image:
+    repository: otel/opentelemetry-collector-contrib
+
+  serviceAccount:
+    create: true
+
+  mode: deployment
+
+  replicaCount: 1
+
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 100m
+    limits:
+      memory: 512Mi
+      cpu: 1.0
+
+  ports:
+    cloudflare:
+      enabled: true
+      containerPort: 8088
+      servicePort: 8088
+      protocol: TCP
+    otlp-envoy:
+      enabled: true
+      containerPort: 14317
+      servicePort: 14317
+      protocol: TCP
+      appProtocol: grpc
+    metrics:
+      enabled: true
+      containerPort: 3001
+      servicePort: 3001
+      protocol: TCP
+    otelcol-metrics:
+      enabled: true
+      containerPort: 3002
+      servicePort: 3002
+      protocol: TCP
+
+  serviceMonitor:
+    enabled: true
+    metricsEndpoints:
+      - port: metrics
+      - port: otelcol-metrics
+
+alerts:
+  - alert: EdgeMetricsAbsent
+    annotations:
+      summary: Edge Metrics are not being produced
+      description: The metrics produced by the Edge Metrics OTel Collector have not been present in the past 5 minutes.
+      impact: Edge availability monitoring and alerting for edge services is down.
+      dashboard_id: edge-metrics-opentelemetry-collector
+    expr: |
+      absent(http_edge_sli_total)
+    for: 5m
+    labels:
+      owners: platform-team
+      severity: critical
+  - alert: EdgeOTelCollectorReceiverRefusedLogs
+    annotations:
+      summary: Edge OTel Collector is refusing [{{$labels.receiver}}] logs
+      description: |
+        The [{{$labels.receiver}}] receiver in the Edge OTel Collector has refused
+        {{$value}}% of incoming log records over the past 5 minutes.
+      impact: Edge metrics and processed edge logs may be missing data points.
+      dashboard_id: edge-metrics-opentelemetry-collector
+    expr: |
+      (
+          sum(rate(otelcol_receiver_failed_log_records_total{job="edge-metrics-opentelemetry-collector"}[5m])) by (receiver)
+          +
+          sum(rate(otelcol_receiver_refused_log_records_total{job="edge-metrics-opentelemetry-collector"}[5m])) by (receiver)
+      )
+      /
+      (
+          sum(rate(otelcol_receiver_accepted_log_records_total{job="edge-metrics-opentelemetry-collector"}[5m])) by (receiver)
+          +
+          sum(rate(otelcol_receiver_failed_log_records_total{job="edge-metrics-opentelemetry-collector"}[5m])) by (receiver)
+          +
+          sum(rate(otelcol_receiver_refused_log_records_total{job="edge-metrics-opentelemetry-collector"}[5m])) by (receiver)
+      )
+      * 100
+      > 1
+    for: 10m
+    keep_firing_for: 5m
+    labels:
+      owners: platform-team
+      severity: critical
+  - alert: EdgeOTelCollectorMetricExportFailures
+    annotations:
+      summary: Edge OTel Collector is failing to export metrics to [{{$labels.exporter}}]
+      description: |
+        The Edge OTel Collector has failed to export {{$value}}% of metric data points
+        to the [{{$labels.exporter}}] exporter over the past 5 minutes.
+      impact: Edge metrics may be missing data points.
+      dashboard_id: edge-metrics-opentelemetry-collector
+    expr: |
+      (
+          sum(rate(otelcol_exporter_send_failed_metric_points_total{job="edge-metrics-opentelemetry-collector", exporter!~"debug.*"}[5m])) by (exporter)
+      )
+      /
+      (
+          sum(rate(otelcol_exporter_sent_metric_points_total{job="edge-metrics-opentelemetry-collector", exporter!~"debug.*"}[5m])) by (exporter)
+          +
+          sum(rate(otelcol_exporter_send_failed_metric_points_total{job="edge-metrics-opentelemetry-collector", exporter!~"debug.*"}[5m])) by (exporter)
+      )
+      * 100
+      > 1
+    for: 10m
+    keep_firing_for: 5m
+    labels:
+      owners: platform-team
+      severity: warning
+
+recording_rules:
+  ## Hourly averages
+  ## ---------------
+
+  ### Average rate of requests (within SLI) per app
+  - record: app:http_edge_internal_availability_sli_total:rate1h
+    expr: >
+      sum by (app)(rate(http_edge_sli_total{
+        sli_error_type!~"invalid_request_error|external_dependency_error"
+      }[1h]))
+
+  ### Average rate of errored requests (within SLI) per app
+  - record: app:http_edge_internal_availability_sli_error_total:rate1h
+    expr: >
+      sum by (app)(rate(http_edge_sli_total{
+        sli_error_type!="",
+        sli_error_type!~"invalid_request_error|external_dependency_error"
+      }[1h]))
+
+  ## 5 minute averages
+  ## -----------------
+
+  ### Average rate of requests (within SLI) per app
+  - record: app:http_edge_internal_availability_sli_total:rate5m
+    expr: >
+      sum by (app)(rate(http_edge_sli_total{
+        sli_error_type!~"invalid_request_error|external_dependency_error"
+      }[5m]))
+
+  ### Average rate of errored requests (within SLI) per app
+  - record: app:http_edge_internal_availability_sli_error_total:rate5m
+    expr: >
+      sum by (app)(rate(http_edge_sli_total{
+        sli_error_type!="",
+        sli_error_type!~"invalid_request_error|external_dependency_error"
+      }[5m]))
+
+  ## Average availability
+  ## --------------------
+
+  ### Average availability per app
+  ### Range: 0-1, representing 0-100% availability
+
+  ### 5 minutes
+  - record: app:http_edge_internal_availability_sli:rate5m
+    expr: >
+      1 - (
+        # When we have data (>0 requests)
+        (
+          app:http_edge_internal_availability_sli_error_total:rate5m
+          /
+          (app:http_edge_internal_availability_sli_total:rate5m > 0)
+        )
+        # When we don't have data (default to 0% error rate)
+        OR (app:http_edge_internal_availability_sli_total:rate5m * 0)
+      )
+
+  ### 30 mins
+  - record: app:http_edge_internal_availability_sli:rate30m
+    expr: >
+      avg_over_time(app:http_edge_internal_availability_sli:rate5m[30m:5m])
+
+  ### 1 hour
+  - record: app:http_edge_internal_availability_sli:rate1h
+    expr: >
+      1 - (
+        # When we have data (>0 requests)
+        (
+          app:http_edge_internal_availability_sli_error_total:rate1h
+          /
+          (app:http_edge_internal_availability_sli_total:rate1h > 0)
+        )
+        # When we don't have data (default to 0% error rate)
+        OR (app:http_edge_internal_availability_sli_total:rate1h * 0)
+      )
+
+  ### 6 hours
+  - record: app:http_edge_internal_availability_sli:rate6h
+    expr: >
+      1 - (
+        # When we have data (>0 requests)
+        (
+          sum_over_time(app:http_edge_internal_availability_sli_error_total:rate5m[6h:5m])
+          /
+          sum_over_time(app:http_edge_internal_availability_sli_total:rate5m[6h:5m]) > 0
+        )
+        # When we don't have data (default to 0% error rate)
+        OR (sum_over_time(app:http_edge_internal_availability_sli_total:rate5m[6h:5m]) * 0)
+      )
+
+  ### 3 days
+  - record: app:http_edge_internal_availability_sli:rate3d
+    expr: >
+      1 - (
+        # When we have data (>0 requests)
+        (
+          sum_over_time(app:http_edge_internal_availability_sli_error_total:rate1h[3d:1h])
+          /
+          sum_over_time(app:http_edge_internal_availability_sli_total:rate1h[3d:1h]) > 0
+        )
+        # When we don't have data (default to 0% error rate)
+        OR (sum_over_time(app:http_edge_internal_availability_sli_total:rate1h[3d:1h]) * 0)
+      )

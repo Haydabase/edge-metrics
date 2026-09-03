@@ -1,0 +1,76 @@
+# Values for the `helm upgrade --install loki grafana/loki` install in the
+# `demo` justfile recipe. Kept as a dedicated file rather than a long chain of
+# --set flags because some of this (log_attributes below) needs real nested
+# YAML lists that --set can't express cleanly.
+
+deploymentMode: SingleBinary
+
+# The chart defaults the "simple scalable" mode's read/write/backend replicas
+# to non-zero even when deploymentMode=SingleBinary, and its validation
+# rejects having both modes active at once — zero them out explicitly.
+singleBinary:
+  replicas: 1
+read:
+  replicas: 0
+write:
+  replicas: 0
+backend:
+  replicas: 0
+
+loki:
+  commonConfig:
+    replication_factor: 1
+
+  # storage.type=filesystem opts out of the object-store (S3/GCS/Azure) config
+  # the chart otherwise expects — required for a local, credential-free demo.
+  # The bucketNames are ignored in filesystem mode but some chart versions
+  # still validate their presence, so they're set defensively.
+  storage:
+    type: filesystem
+    bucketNames:
+      chunks: chunks
+      ruler: ruler
+      admin: admin
+
+  # Opts into the chart's built-in quick-test schema_config (a real deployment
+  # would define its own).
+  useTestSchema: true
+
+  # Disables Loki's multi-tenancy check — without it, both the collector's
+  # push requests and Grafana's queries fail with "no org id" since neither
+  # sends an X-Scope-OrgID header (not needed for this single-tenant demo).
+  auth_enabled: false
+
+  limits_config:
+    otlp_config:
+      # Loki's OTLP ingestion only auto-indexes a fixed list of well-known
+      # Resource attributes (service.name among them — see
+      # transform/edge_export_labels in otel-collector-config.yaml, which
+      # promotes it to the Resource for exactly this reason). Everything else
+      # needs to be named explicitly here to become a real indexed label
+      # instead of unindexed structured metadata. These attribute names must
+      # match the bare names transform/edge_export_labels sets on the log
+      # record before export.
+      log_attributes:
+        - action: index_label
+          attributes:
+            - sub_domain
+            - tls_type
+            - ingress_layer
+            - status_code
+            - sli_error_type
+            - job
+
+monitoring:
+  selfMonitoring:
+    enabled: false
+  lokiCanary:
+    enabled: false
+
+test:
+  enabled: false
+
+chunksCache:
+  enabled: false
+resultsCache:
+  enabled: false

@@ -1,0 +1,28 @@
+# Disable default receivers and pipelines
+
+opentelemetry-collector:
+  config:
+    receivers:
+      jaeger: null
+      otlp: null
+      prometheus: null
+      zipkin: null
+    service:
+      pipelines:
+        logs: null
+        metrics: null
+        traces: null
+  
+  ports:
+    otlp:
+      enabled: false
+    otlp-http:
+      enabled: false
+    jaeger-compact:
+      enabled: false
+    jaeger-thrift:
+      enabled: false
+    jaeger-grpc:
+      enabled: false
+    zipkin:
+      enabled: false

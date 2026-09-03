@@ -1,0 +1,82 @@
+{
+  "resourceLogs": [
+    {
+      "resource": {},
+      "scopeLogs": [
+        {
+          "scope": {},
+          "logRecords": [
+            {
+              "timeUnixNano": "1704067200000000000",
+              "body": {
+                "stringValue": "SLI error type test"
+              },
+              "attributes": [
+                {
+                  "key": "ClientRequestSource",
+                  "value": {
+                    "stringValue": "eyeball"
+                  }
+                },
+                {
+                  "key": "ClientRequestHost",
+                  "value": {
+                    "stringValue": "api.paybybank.example"
+                  }
+                },
+                {
+                  "key": "ClientRequestPath",
+                  "value": {
+                    "stringValue": "/payments/619305e1-7fca-4a1f-b7a2-3197e5e2c1b0"
+                  }
+                },
+                {
+                  "key": "ClientRequestMethod",
+                  "value": {
+                    "stringValue": "GET"
+                  }
+                },
+                {
+                  "key": "EdgeResponseStatus",
+                  "value": {
+                    "doubleValue": 500
+                  }
+                },
+                {
+                  "key": "EdgeStartTimestamp",
+                  "value": {
+                    "doubleValue": 1704067200000000000
+                  }
+                },
+                {
+                  "key": "EdgeEndTimestamp",
+                  "value": {
+                    "doubleValue": 1704067200150000000
+                  }
+                },
+                {
+                  "key": "EdgeTimeToFirstByteMs",
+                  "value": {
+                    "doubleValue": 125
+                  }
+                },
+                {
+                  "key": "ClientRequestUserAgent",
+                  "value": {
+                    "stringValue": "TestClient/1.0"
+                  }
+                },
+                {
+                  "key": "RayID",
+                  "value": {
+                    "stringValue": "cloudflare-sli-fallback-500"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

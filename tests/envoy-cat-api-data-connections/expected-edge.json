@@ -1,0 +1,214 @@
+{
+  "resourceLogs": [
+    {
+      "resource": {},
+      "scopeLogs": [
+        {
+          "scope": {},
+          "logRecords": [
+            {
+              "timeUnixNano": "1704067200000000000",
+              "body": {
+                "stringValue": "Envoy HTTP request"
+              },
+              "attributes": [
+                {
+                  "key": "requested_server_name",
+                  "value": {
+                    "stringValue": "api.mtls.paybybank.example"
+                  }
+                },
+                {
+                  "key": "path",
+                  "value": {
+                    "stringValue": "/data-connections/619305e1-7fca-4a1f-b7a2-3197e5e2c1b0"
+                  }
+                },
+                {
+                  "key": "method",
+                  "value": {
+                    "stringValue": "GET"
+                  }
+                },
+                {
+                  "key": "response_code",
+                  "value": {
+                    "stringValue": "200"
+                  }
+                },
+                {
+                  "key": "start_time",
+                  "value": {
+                    "stringValue": "2024-01-01T00:00:00.000Z"
+                  }
+                },
+                {
+                  "key": "duration",
+                  "value": {
+                    "stringValue": "150"
+                  }
+                },
+                {
+                  "key": "time_to_first_byte_ms",
+                  "value": {
+                    "stringValue": "125"
+                  }
+                },
+                {
+                  "key": "user-agent",
+                  "value": {
+                    "stringValue": "TestClient/1.0"
+                  }
+                },
+                {
+                  "key": "cf-ray",
+                  "value": {
+                    "stringValue": "envoy-cat-api-data-connections"
+                  }
+                },
+                {
+                  "key": "pbb-client-id",
+                  "value": {
+                    "stringValue": "-"
+                  }
+                },
+                {
+                  "key": "pbb-meta",
+                  "value": {
+                    "stringValue": "-"
+                  }
+                },
+                {
+                  "key": "pbb.ingress.layer",
+                  "value": {
+                    "stringValue": "envoy"
+                  }
+                },
+                {
+                  "key": "url.host",
+                  "value": {
+                    "stringValue": "api.mtls.paybybank.example"
+                  }
+                },
+                {
+                  "key": "http.request.method",
+                  "value": {
+                    "stringValue": "GET"
+                  }
+                },
+                {
+                  "key": "url.path",
+                  "value": {
+                    "stringValue": "/data-connections/619305e1-7fca-4a1f-b7a2-3197e5e2c1b0"
+                  }
+                },
+                {
+                  "key": "http.request.received_at",
+                  "value": {
+                    "stringValue": "2024-01-01T00:00:00.000Z"
+                  }
+                },
+                {
+                  "key": "pbb.latency.duration_ms",
+                  "value": {
+                    "intValue": "150"
+                  }
+                },
+                {
+                  "key": "pbb.latency.time_to_first_byte_ms",
+                  "value": {
+                    "intValue": "125"
+                  }
+                },
+                {
+                  "key": "http.response.status_code",
+                  "value": {
+                    "intValue": "200"
+                  }
+                },
+                {
+                  "key": "http.response.sent_at",
+                  "value": {
+                    "stringValue": "2024-01-01T00:00:00.15Z"
+                  }
+                },
+                {
+                  "key": "user_agent.original",
+                  "value": {
+                    "stringValue": "TestClient/1.0"
+                  }
+                },
+                {
+                  "key": "cf.ray_id",
+                  "value": {
+                    "stringValue": "envoy-cat-api-data-connections"
+                  }
+                },
+                {
+                  "key": "pbb.ingress.tls_type",
+                  "value": {
+                    "stringValue": "mtls"
+                  }
+                },
+                {
+                  "key": "pbb.domain",
+                  "value": {
+                    "stringValue": "api.paybybank.example"
+                  }
+                },
+                {
+                  "key": "pbb.sub_domain",
+                  "value": {
+                    "stringValue": "api"
+                  }
+                },
+                {
+                  "key": "http.route",
+                  "value": {
+                    "stringValue": "/data-connections/{id}"
+                  }
+                },
+                {
+                  "key": "pbb.operation",
+                  "value": {
+                    "stringValue": "GET /data-connections/{id}"
+                  }
+                },
+                {
+                  "key": "pbb.latency.external_dependency_ms",
+                  "value": {
+                    "intValue": "0"
+                  }
+                },
+                {
+                  "key": "pbb.latency.paybybank_ms",
+                  "value": {
+                    "intValue": "150"
+                  }
+                },
+                {
+                  "key": "pbb.latency.paybybank_time_to_first_byte_ms",
+                  "value": {
+                    "intValue": "125"
+                  }
+                },
+                {
+                  "key": "pbb.product",
+                  "value": {
+                    "stringValue": "Data"
+                  }
+                },
+                {
+                  "key": "pbb.service.name",
+                  "value": {
+                    "stringValue": "connections-api"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

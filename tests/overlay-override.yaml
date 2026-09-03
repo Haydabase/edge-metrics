@@ -1,0 +1,4 @@
+# Currently empty — kept as a hook for future test-only config overrides.
+# NOTE: keep this a comment-only (null) document, not `{}` — merging an
+# empty *mapping* here via yq's `*` operator corrupts null-valued sibling
+# keys elsewhere in the merged config into empty strings (a yq quirk).

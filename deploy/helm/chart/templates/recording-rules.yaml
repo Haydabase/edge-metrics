@@ -1,0 +1,14 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ .Release.Name }}-opentelemetry-collector-recording-rules
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "opentelemetry-collector.labels" . | nindent 4 }}
+spec:
+  groups:
+  - name: ./{{ .Release.Name }}-opentelemetry-collector-internal-availability-sli.rules
+    interval: 30s
+    rules:
+      {{ .Values.recording_rules | toYaml | nindent 6 }}

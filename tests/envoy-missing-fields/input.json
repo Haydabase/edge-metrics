@@ -1,0 +1,82 @@
+{
+  "resourceLogs": [
+    {
+      "resource": {},
+      "scopeLogs": [
+        {
+          "scope": {},
+          "logRecords": [
+            {
+              "timeUnixNano": "1704067200000000000",
+              "body": {
+                "stringValue": "Envoy HTTP request"
+              },
+              "attributes": [
+                {
+                  "key": "requested_server_name",
+                  "value": {
+                    "stringValue": "api.mtls.paybybank.example"
+                  }
+                },
+                {
+                  "key": "path",
+                  "value": {
+                    "stringValue": "/some-other-path"
+                  }
+                },
+                {
+                  "key": "method",
+                  "value": {
+                    "stringValue": "POST"
+                  }
+                },
+                {
+                  "key": "response_code",
+                  "value": {
+                    "stringValue": "200"
+                  }
+                },
+                {
+                  "key": "start_time",
+                  "value": {
+                    "stringValue": "2024-01-01T00:00:00.000Z"
+                  }
+                },
+                {
+                  "key": "duration",
+                  "value": {
+                    "stringValue": "75"
+                  }
+                },
+                {
+                  "key": "user-agent",
+                  "value": {
+                    "stringValue": "-"
+                  }
+                },
+                {
+                  "key": "cf-ray",
+                  "value": {
+                    "stringValue": "envoy-missing-fields"
+                  }
+                },
+                {
+                  "key": "pbb-client-id",
+                  "value": {
+                    "stringValue": "-"
+                  }
+                },
+                {
+                  "key": "pbb-meta",
+                  "value": {
+                    "stringValue": "-"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+# Namespaces for the demo, applied up front so nothing races their creation.
+#
+# - api-gateway: the Gateway API resources (Gateway, EnvoyProxy) — think of
+#   this as the platform/infra team's namespace.
+# - applications: the demo backend services and their HTTPRoutes — the
+#   "app team" namespace, attaching cross-namespace to the shared Gateway.
+#
+# The collector itself stays in its own `edge-metrics` namespace, created by
+# its Helm release (`helm upgrade --install edge-metrics ... --create-namespace`).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: api-gateway
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: applications

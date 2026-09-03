@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-server
+  namespace: applications
+  labels:
+    app.kubernetes.io/name: auth-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: auth-server
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: auth-server
+    spec:
+      containers:
+        - name: http-echo
+          image: hashicorp/http-echo:1.0
+          args:
+            - -text=auth-server
+          ports:
+            - containerPort: 5678
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 50m
+              memory: 32Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-server
+  namespace: applications
+  labels:
+    app.kubernetes.io/name: auth-server
+spec:
+  selector:
+    app.kubernetes.io/name: auth-server
+  ports:
+    - port: 80
+      targetPort: 5678
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: auth-server
+  namespace: applications
+  annotations:
+    sli.paybybank.example/product: Auth
+spec:
+  parentRefs:
+    - name: paybybank-gw
+      namespace: api-gateway
+  hostnames:
+    - auth.paybybank.example
+    - auth.mtls.paybybank.example
+  rules:
+    - matches:
+        - path:
+            type: Exact
+            value: /connect/token
+      backendRefs:
+        - name: auth-server
+          port: 80
