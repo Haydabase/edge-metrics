@@ -616,7 +616,7 @@ data:
         "preload": false,
         "tags": [],
         "timeSettings": {
-          "autoRefresh": "",
+          "autoRefresh": "5s",
           "autoRefreshIntervals": [
             "5s",
             "10s",

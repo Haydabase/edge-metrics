@@ -47,7 +47,9 @@ opentelemetry-collector:
     enabled: true
     metricsEndpoints:
       - port: metrics
+        interval: 5s
       - port: otelcol-metrics
+        interval: 5s
 
 alerts:
   - alert: EdgeMetricsAbsent
