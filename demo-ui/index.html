@@ -10,7 +10,7 @@
   p.sub { opacity: 0.75; margin-top: -0.5rem; }
   fieldset { border: 1px solid #8884; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
   label { display: block; margin-bottom: 0.5rem; }
-  select, button { font-size: 1rem; padding: 0.4rem 0.6rem; }
+  select, input, button { font-size: 1rem; padding: 0.4rem 0.6rem; }
   button { cursor: pointer; }
   #result { white-space: pre-wrap; font-family: ui-monospace, monospace; background: #8882; border-radius: 8px; padding: 1rem; min-height: 3rem; }
   .hint { font-size: 0.85rem; opacity: 0.75; margin-top: 0.5rem; }
@@ -35,6 +35,37 @@
     <button id="send">Send request</button>
   </fieldset>
 
+  <fieldset>
+    <legend>Scenario (optional)</legend>
+    <label for="status">Response status code</label>
+    <select id="status">
+      <option value="200">200 OK (default)</option>
+      <option value="400">400 Bad Request</option>
+      <option value="401">401 Unauthorized</option>
+      <option value="403">403 Forbidden</option>
+      <option value="404">404 Not Found</option>
+      <option value="429">429 Too Many Requests</option>
+      <option value="500">500 Internal Server Error</option>
+      <option value="502">502 Bad Gateway</option>
+      <option value="503">503 Service Unavailable</option>
+      <option value="504">504 Gateway Timeout</option>
+    </select>
+
+    <label for="sliType">App-reported error SLI type</label>
+    <select id="sliType">
+      <option value="">(none — derive from status code)</option>
+      <option value="invalid_request_error">invalid_request_error</option>
+      <option value="external_dependency_error">external_dependency_error</option>
+      <option value="service_level_error">service_level_error</option>
+    </select>
+
+    <label for="externalMs">External dependency latency (ms)</label>
+    <input type="number" id="externalMs" min="0" step="1" placeholder="e.g. 250" />
+
+    <label for="clientId">App-reported client ID</label>
+    <input type="text" id="clientId" placeholder="e.g. testclient-34867" />
+  </fieldset>
+
   <div id="result">Pick a route and hit "Send request".</div>
   <p class="hint">
     Non-mTLS routes also simulate the matching Cloudflare Logpush push for the same request
@@ -45,16 +76,53 @@
 
   <script>
     const routeSelect = document.getElementById("route");
+    const statusSelect = document.getElementById("status");
+    const sliTypeSelect = document.getElementById("sliType");
+    const externalMsInput = document.getElementById("externalMs");
+    const clientIdInput = document.getElementById("clientId");
     const sendButton = document.getElementById("send");
     const result = document.getElementById("result");
 
     sendButton.addEventListener("click", async () => {
       const [subdomain, path] = routeSelect.value.split("|");
+
+      // These become request headers that the demo apps' nginx config reads
+      // to pick a status code and simulate the pbb-meta app-response header
+      // (see k8s/demo-app/nginx-config.yaml).
+      const headers = {};
+      if (statusSelect.value !== "200") {
+        headers["X-Demo-Status"] = statusSelect.value;
+      }
+      const meta = {};
+      if (sliTypeSelect.value) meta["error.pbb.sli_type"] = sliTypeSelect.value;
+      if (clientIdInput.value) meta["pbb-client-id"] = clientIdInput.value;
+      if (externalMsInput.value) meta["pbb.latency.external_dependency_ms"] = Number(externalMsInput.value);
+      if (Object.keys(meta).length > 0) {
+        headers["X-Demo-Pbb-Meta"] = btoa(JSON.stringify(meta));
+      }
+
       result.textContent = "Sending...";
       try {
-        const res = await fetch(`/${subdomain}${path}`, { method: "GET" });
-        const body = await res.json();
-        result.textContent = JSON.stringify(body, null, 2);
+        const res = await fetch(`/${subdomain}${path}`, { method: "GET", headers });
+        const summary = await res.json();
+
+        if (summary.envoyStatus === undefined) {
+          // Relay-level error (unknown subdomain, gateway unreachable) - show as-is.
+          result.textContent = JSON.stringify(summary, null, 2);
+          return;
+        }
+
+        const headerLines = Object.entries(summary.envoyHeaders)
+          .map(([name, value]) => `${name}: ${value}`)
+          .join("\n");
+        result.textContent = [
+          `HTTP ${summary.envoyStatus}`,
+          headerLines,
+          "",
+          summary.envoyBody,
+          "",
+          `— relay: ${summary.envoyDurationMs}ms, cloudflareSimulated=${summary.cloudflareSimulated}`,
+        ].join("\n");
       } catch (err) {
         result.textContent = `Request to relay failed: ${err.message}`;
       }

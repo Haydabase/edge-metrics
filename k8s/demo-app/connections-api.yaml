@@ -16,19 +16,28 @@ spec:
         app.kubernetes.io/name: connections-api
     spec:
       containers:
-        - name: http-echo
-          image: hashicorp/http-echo:1.0
-          args:
-            - -text=connections-api
+        - name: nginx
+          image: nginx:1.27-alpine
+          env:
+            - name: SERVICE_NAME
+              value: connections-api
           ports:
-            - containerPort: 5678
+            - containerPort: 8080
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/templates/default.conf.template
+              subPath: default.conf.template
           resources:
             requests:
               cpu: 10m
-              memory: 16Mi
+              memory: 32Mi
             limits:
               cpu: 50m
-              memory: 32Mi
+              memory: 64Mi
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: demo-app-nginx-config
 ---
 apiVersion: v1
 kind: Service
@@ -42,7 +51,7 @@ spec:
     app.kubernetes.io/name: connections-api
   ports:
     - port: 80
-      targetPort: 5678
+      targetPort: 8080
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute

@@ -45,8 +45,15 @@ function forwardToGateway(req, host, upstreamPath) {
         headers: { ...req.headers, host },
       },
       (upstreamRes) => {
-        upstreamRes.resume();
-        upstreamRes.on("end", () => resolve(upstreamRes.statusCode));
+        const chunks = [];
+        upstreamRes.on("data", (chunk) => chunks.push(chunk));
+        upstreamRes.on("end", () =>
+          resolve({
+            status: upstreamRes.statusCode,
+            headers: upstreamRes.headers,
+            body: Buffer.concat(chunks).toString("utf8"),
+          }),
+        );
       },
     );
     upstreamReq.on("error", reject);
@@ -60,7 +67,7 @@ function forwardToGateway(req, host, upstreamPath) {
 // attributes/cloudflare -> transform/cloudflare processing chain — see
 // receivers.cloudflare and processors.*/cloudflare in otel-collector-config.yaml
 // for the exact fields this must match.
-function simulateCloudflareLog({ host, method, upstreamPath, status, startMs, endMs }) {
+function simulateCloudflareLog({ host, method, upstreamPath, status, startMs, endMs, responseHeaders }) {
   const rayId = crypto.randomBytes(8).toString("hex");
   const payload = {
     ClientRequestHost: host,
@@ -74,6 +81,12 @@ function simulateCloudflareLog({ host, method, upstreamPath, status, startMs, en
     EdgeTimeToFirstByteMs: Math.max(1, endMs - startMs),
     RayID: rayId,
     RequestHeaders: { pbb_client_id: "demo-mobile-app" },
+    // Real Cloudflare Logpush sees the full origin response, headers included -
+    // mirror that here so app-reported headers (e.g. pbb-meta) reach this log
+    // the same way they already do via Envoy's access log on the mTLS routes.
+    ResponseHeaders: Object.fromEntries(
+      Object.entries(responseHeaders).map(([name, value]) => [name.replace(/-/g, "_"), value]),
+    ),
   };
   const body = JSON.stringify(payload) + "\n";
 
@@ -124,14 +137,15 @@ const server = http.createServer(async (req, res) => {
   }
 
   const startMs = Date.now();
-  let envoyStatus;
+  let envoyResult;
   try {
-    envoyStatus = await forwardToGateway(req, host, upstreamPath);
+    envoyResult = await forwardToGateway(req, host, upstreamPath);
   } catch (err) {
     res.writeHead(502, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ error: `request to Envoy Gateway failed: ${err.message}` }));
     return;
   }
+  const envoyStatus = envoyResult.status;
   const endMs = Date.now();
 
   // mTLS traffic never passes through Cloudflare in production, so skip the
@@ -145,6 +159,7 @@ const server = http.createServer(async (req, res) => {
       status: envoyStatus,
       startMs,
       endMs,
+      responseHeaders: envoyResult.headers,
     });
     cloudflareSimulated = true;
   }
@@ -153,6 +168,8 @@ const server = http.createServer(async (req, res) => {
   res.end(
     JSON.stringify({
       envoyStatus,
+      envoyHeaders: envoyResult.headers,
+      envoyBody: envoyResult.body,
       envoyDurationMs: endMs - startMs,
       cloudflareSimulated,
     }),
