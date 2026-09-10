@@ -36,7 +36,19 @@
   </fieldset>
 
   <fieldset>
-    <legend>Scenario (optional)</legend>
+    <legend>Request mode</legend>
+    <label style="display: inline-block; margin-right: 1.5rem;">
+      <input type="radio" name="mode" id="modeResponse" value="response" checked />
+      Cluster Response
+    </label>
+    <label style="display: inline-block;">
+      <input type="radio" name="mode" id="modeTimeout" value="timeout" />
+      Cluster Timeout
+    </label>
+  </fieldset>
+
+  <fieldset id="responseOptions">
+    <legend>Cluster Response Options</legend>
     <label for="status">Response status code</label>
     <select id="status">
       <option value="200">200 OK (default)</option>
@@ -66,6 +78,17 @@
     <input type="text" id="clientId" placeholder="e.g. testclient-34867" />
   </fieldset>
 
+  <fieldset id="timeoutOptions" hidden>
+    <legend>Cluster Timeout Options</legend>
+    <label for="timeoutMs">Simulated timeout delay (ms)</label>
+    <input type="number" id="timeoutMs" min="100" max="30000" step="100" value="1000" />
+    <p class="hint">
+      The relay will not call the cluster at all — after the delay it emits only a
+      simulated Cloudflare log with <code>EdgeResponseStatus: 524</code> (Cloudflare's
+      "A Timeout Occurred" code), as if the origin never answered in time.
+    </p>
+  </fieldset>
+
   <div id="result">Pick a route and hit "Send request".</div>
   <p class="hint">
     Non-mTLS routes also simulate the matching Cloudflare Logpush push for the same request
@@ -76,35 +99,87 @@
 
   <script>
     const routeSelect = document.getElementById("route");
+    const modeResponseRadio = document.getElementById("modeResponse");
+    const modeTimeoutRadio = document.getElementById("modeTimeout");
+    const responseOptions = document.getElementById("responseOptions");
+    const timeoutOptions = document.getElementById("timeoutOptions");
     const statusSelect = document.getElementById("status");
     const sliTypeSelect = document.getElementById("sliType");
     const externalMsInput = document.getElementById("externalMs");
     const clientIdInput = document.getElementById("clientId");
+    const timeoutMsInput = document.getElementById("timeoutMs");
     const sendButton = document.getElementById("send");
     const result = document.getElementById("result");
 
+    function isMtlsRoute() {
+      const [subdomain] = routeSelect.value.split("|");
+      return subdomain.includes(".mtls");
+    }
+
+    function updateModeVisibility() {
+      const timeoutMode = modeTimeoutRadio.checked;
+      responseOptions.hidden = timeoutMode;
+      timeoutOptions.hidden = !timeoutMode;
+    }
+
+    // Cloudflare never sees mTLS traffic in production, so a "cluster timeout"
+    // (which only manifests as a Cloudflare log) doesn't apply to mTLS routes.
+    function updateTimeoutAvailability() {
+      const disallowed = isMtlsRoute();
+      modeTimeoutRadio.disabled = disallowed;
+      modeTimeoutRadio.title = disallowed
+        ? "mTLS routes don't pass through Cloudflare, so a cluster timeout can't be logged there."
+        : "";
+      if (disallowed && modeTimeoutRadio.checked) {
+        modeResponseRadio.checked = true;
+        updateModeVisibility();
+      }
+    }
+
+    modeResponseRadio.addEventListener("change", updateModeVisibility);
+    modeTimeoutRadio.addEventListener("change", updateModeVisibility);
+    routeSelect.addEventListener("change", updateTimeoutAvailability);
+    updateTimeoutAvailability();
+    updateModeVisibility();
+
     sendButton.addEventListener("click", async () => {
       const [subdomain, path] = routeSelect.value.split("|");
-
-      // These become request headers that the demo apps' nginx config reads
-      // to pick a status code and simulate the pbb-meta app-response header
-      // (see k8s/demo-app/nginx-config.yaml).
       const headers = {};
-      if (statusSelect.value !== "200") {
-        headers["X-Demo-Status"] = statusSelect.value;
-      }
-      const meta = {};
-      if (sliTypeSelect.value) meta["error.pbb.sli_type"] = sliTypeSelect.value;
-      if (clientIdInput.value) meta["pbb-client-id"] = clientIdInput.value;
-      if (externalMsInput.value) meta["pbb.latency.external_dependency_ms"] = Number(externalMsInput.value);
-      if (Object.keys(meta).length > 0) {
-        headers["X-Demo-Pbb-Meta"] = btoa(JSON.stringify(meta));
+
+      if (modeTimeoutRadio.checked) {
+        // No app response will ever exist in this mode, so there's nothing to
+        // carry a status code or pbb-meta on — the relay skips the cluster
+        // call entirely and only emits a simulated Cloudflare timeout log.
+        headers["X-Demo-Cluster-Timeout"] = timeoutMsInput.value || "1000";
+      } else {
+        // These become request headers that the demo apps' nginx config reads
+        // to pick a status code and simulate the pbb-meta app-response header
+        // (see k8s/demo-app/nginx-config.yaml).
+        if (statusSelect.value !== "200") {
+          headers["X-Demo-Status"] = statusSelect.value;
+        }
+        const meta = {};
+        if (sliTypeSelect.value) meta["error.pbb.sli_type"] = sliTypeSelect.value;
+        if (clientIdInput.value) meta["pbb-client-id"] = clientIdInput.value;
+        if (externalMsInput.value) meta["pbb.latency.external_dependency_ms"] = Number(externalMsInput.value);
+        if (Object.keys(meta).length > 0) {
+          headers["X-Demo-Pbb-Meta"] = btoa(JSON.stringify(meta));
+        }
       }
 
       result.textContent = "Sending...";
       try {
         const res = await fetch(`/${subdomain}${path}`, { method: "GET", headers });
         const summary = await res.json();
+
+        if (summary.simulatedTimeout) {
+          result.textContent = [
+            "Simulated cluster timeout (cluster was never called)",
+            `Cloudflare logged EdgeResponseStatus ${summary.cloudflareStatus} after ${summary.delayMs}ms`,
+            `cloudflareSimulated=${summary.cloudflareSimulated}`,
+          ].join("\n");
+          return;
+        }
 
         if (summary.envoyStatus === undefined) {
           // Relay-level error (unknown subdomain, gateway unreachable) - show as-is.

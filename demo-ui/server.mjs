@@ -136,6 +136,49 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  const clusterTimeoutHeader = req.headers["x-demo-cluster-timeout"];
+  if (clusterTimeoutHeader !== undefined) {
+    if (isMtls(subdomain)) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(
+        JSON.stringify({
+          error: "cluster timeout simulation isn't supported on mTLS routes (Cloudflare never sees mTLS traffic)",
+        }),
+      );
+      return;
+    }
+
+    const delayMs = Math.min(Math.max(parseInt(clusterTimeoutHeader, 10) || 1000, 100), 30000);
+    const timeoutStartMs = Date.now();
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+    const timeoutEndMs = Date.now();
+
+    // The cluster is never called here: Cloudflare's real 524 behavior is
+    // "connected to origin but it never answered in time", so the log below
+    // is built purely from the simulated wait, with no origin response
+    // headers to draw from.
+    await simulateCloudflareLog({
+      host,
+      method: req.method,
+      upstreamPath,
+      status: 524,
+      startMs: timeoutStartMs,
+      endMs: timeoutEndMs,
+      responseHeaders: {},
+    });
+
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(
+      JSON.stringify({
+        simulatedTimeout: true,
+        delayMs,
+        cloudflareStatus: 524,
+        cloudflareSimulated: true,
+      }),
+    );
+    return;
+  }
+
   const startMs = Date.now();
   let envoyResult;
   try {
