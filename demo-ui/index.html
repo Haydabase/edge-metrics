@@ -22,16 +22,33 @@
   <p class="sub">Send a real request through Envoy Gateway to one of the demo services.</p>
 
   <fieldset>
-    <label for="route">Route</label>
-    <select id="route">
-      <option value="api|/payments">Payments — api.paybybank.example/payments</option>
-      <option value="api|/connected-accounts">Connected Accounts — api.paybybank.example/connected-accounts</option>
-      <option value="api|/data-connections">Data Connections — api.paybybank.example/data-connections</option>
-      <option value="api|/payouts">Payouts — api.paybybank.example/payouts</option>
-      <option value="api.mtls|/payments">Payments (mTLS) — api.mtls.paybybank.example/payments</option>
-      <option value="auth|/connect/token">Auth — auth.paybybank.example/connect/token</option>
-      <option value="auth.mtls|/connect/token">Auth (mTLS) — auth.mtls.paybybank.example/connect/token</option>
+    <legend>Background Simulation</legend>
+    <button id="simToggle">▶ Play</button>
+    <p id="simStatus" class="hint">Not running.</p>
+  </fieldset>
+
+  <fieldset>
+    <legend>Route</legend>
+    <label>Transport</label>
+    <label style="display: inline-block; margin-right: 1.5rem;">
+      <input type="radio" name="transport" id="transportTls" value="tls" checked />
+      TLS
+    </label>
+    <label style="display: inline-block;">
+      <input type="radio" name="transport" id="transportMtls" value="mtls" />
+      mTLS
+    </label>
+
+    <label for="subdomainSelect">Sub-domain</label>
+    <select id="subdomainSelect">
+      <option value="api">API — api.paybybank.example</option>
+      <option value="auth">Auth — auth.paybybank.example</option>
     </select>
+
+    <label for="path">Path</label>
+    <input type="text" id="path" list="pathOptions" />
+    <datalist id="pathOptions"></datalist>
+
     <button id="send">Send request</button>
   </fieldset>
 
@@ -98,7 +115,11 @@
   </p>
 
   <script>
-    const routeSelect = document.getElementById("route");
+    const transportTlsRadio = document.getElementById("transportTls");
+    const transportMtlsRadio = document.getElementById("transportMtls");
+    const subdomainSelect = document.getElementById("subdomainSelect");
+    const pathInput = document.getElementById("path");
+    const pathOptions = document.getElementById("pathOptions");
     const modeResponseRadio = document.getElementById("modeResponse");
     const modeTimeoutRadio = document.getElementById("modeTimeout");
     const responseOptions = document.getElementById("responseOptions");
@@ -111,9 +132,35 @@
     const sendButton = document.getElementById("send");
     const result = document.getElementById("result");
 
-    function isMtlsRoute() {
-      const [subdomain] = routeSelect.value.split("|");
-      return subdomain.includes(".mtls");
+    // Known paths per sub-domain, for the Path field's autocomplete suggestions.
+    // The first entry in each list is that sub-domain's default path.
+    const KNOWN_PATHS = {
+      api: ["/payments", "/connected-accounts", "/data-connections", "/payouts"],
+      auth: ["/connect/token"],
+    };
+
+    function buildCombos() {
+      const combos = [];
+      for (const subdomain of Object.keys(KNOWN_PATHS)) {
+        for (const suffix of ["", ".mtls"]) {
+          for (const path of KNOWN_PATHS[subdomain]) {
+            combos.push({ subdomain: subdomain + suffix, path });
+          }
+        }
+      }
+      return combos;
+    }
+    const SIMULATION_COMBOS = buildCombos();
+
+    function updatePathSuggestions() {
+      const paths = KNOWN_PATHS[subdomainSelect.value] || [];
+      pathOptions.innerHTML = "";
+      for (const p of paths) {
+        const option = document.createElement("option");
+        option.value = p;
+        pathOptions.appendChild(option);
+      }
+      pathInput.value = paths[0] || "";
     }
 
     function updateModeVisibility() {
@@ -125,7 +172,7 @@
     // Cloudflare never sees mTLS traffic in production, so a "cluster timeout"
     // (which only manifests as a Cloudflare log) doesn't apply to mTLS routes.
     function updateTimeoutAvailability() {
-      const disallowed = isMtlsRoute();
+      const disallowed = transportMtlsRadio.checked;
       modeTimeoutRadio.disabled = disallowed;
       modeTimeoutRadio.title = disallowed
         ? "mTLS routes don't pass through Cloudflare, so a cluster timeout can't be logged there."
@@ -138,12 +185,53 @@
 
     modeResponseRadio.addEventListener("change", updateModeVisibility);
     modeTimeoutRadio.addEventListener("change", updateModeVisibility);
-    routeSelect.addEventListener("change", updateTimeoutAvailability);
+    subdomainSelect.addEventListener("change", updatePathSuggestions);
+    transportTlsRadio.addEventListener("change", updateTimeoutAvailability);
+    transportMtlsRadio.addEventListener("change", updateTimeoutAvailability);
+    updatePathSuggestions();
     updateTimeoutAvailability();
     updateModeVisibility();
 
+    // Background simulation - round-robins plain 200 requests across every
+    // known domain/path/transport combo, independent of the manual Route and
+    // Request mode controls above (and of #result, which those still use).
+    const simToggleButton = document.getElementById("simToggle");
+    const simStatus = document.getElementById("simStatus");
+    let simTimer = null;
+    let simIndex = 0;
+    let simCount = 0;
+
+    async function simTick() {
+      const combo = SIMULATION_COMBOS[simIndex % SIMULATION_COMBOS.length];
+      simIndex++;
+      simCount++;
+      try {
+        const res = await fetch(`/${combo.subdomain}${combo.path}`);
+        const summary = await res.json();
+        const status = summary.envoyStatus ?? summary.error ?? "?";
+        simStatus.textContent = `Running — ${simCount} sent — last: ${combo.subdomain}${combo.path} → ${status}`;
+      } catch (err) {
+        simStatus.textContent = `Running — ${simCount} sent — last: ${combo.subdomain}${combo.path} failed (${err.message})`;
+      }
+    }
+
+    simToggleButton.addEventListener("click", () => {
+      if (simTimer) {
+        clearInterval(simTimer);
+        simTimer = null;
+        simToggleButton.textContent = "▶ Play";
+        simStatus.textContent = `Paused — ${simCount} sent.`;
+      } else {
+        simToggleButton.textContent = "⏸ Pause";
+        simTick();
+        simTimer = setInterval(simTick, 200);
+      }
+    });
+
     sendButton.addEventListener("click", async () => {
-      const [subdomain, path] = routeSelect.value.split("|");
+      const subdomain = subdomainSelect.value + (transportMtlsRadio.checked ? ".mtls" : "");
+      const trimmedPath = pathInput.value.trim();
+      const path = trimmedPath.startsWith("/") ? trimmedPath : `/${trimmedPath}`;
       const headers = {};
 
       if (modeTimeoutRadio.checked) {
