@@ -1,0 +1,51 @@
+# Helm values for the OpenTelemetry eBPF Instrumentation (OBI) DaemonSet.
+#
+# This is a NEW, parallel telemetry path — it does not touch the existing
+# log-derived edge metrics pipeline (deploy/helm/chart). OBI attaches eBPF
+# probes to the 5 nginx-based demo backends in the `applications` namespace
+# and exports auto-instrumented RED (rate/errors/duration) metrics directly
+# to Prometheus, with zero application code changes.
+#
+# privileged:true / securityContext.privileged:true are left at chart
+# defaults intentionally: this is a demo cluster on an unverified kernel
+# (Docker Desktop via kind — see k8s/kind-config.yaml, no node image
+# pinned), and narrowing to extraCapabilities risks a hard-to-debug
+# capability mismatch mid-conference. Not a production posture.
+
+config:
+  data:
+    # Scope eBPF discovery to the demo backends' namespace only. Without
+    # this, OBI's chart default is to instrument every namespace in the
+    # cluster (kube-system, monitoring, envoy-gateway-system, etc.) —
+    # noisier and slower to bring up for no benefit in this demo.
+    discovery:
+      instrument:
+        - k8s_namespace: applications
+    # Groups path segments into route templates to avoid cardinality
+    # blow-up from path parameters. Low-risk here (the demo routes are
+    # fixed prefixes, no IDs) but matches upstream's own recommended
+    # default and keeps http_route sane if routes change later.
+    routes:
+      unmatched: heuristic
+    # This demo scrapes Prometheus directly (see service/serviceMonitor
+    # below) rather than routing through the existing edge-metrics OTel
+    # Collector, so no OTLP push target exists. Setting these to null
+    # (not omitting them) removes the chart's default otel_traces_export/
+    # otel_metrics_export keys entirely from the rendered config —
+    # confirmed via `helm template` that this produces a clean ConfigMap
+    # with neither key present, not a broken `otel_traces_export: null`.
+    otel_traces_export: null
+    otel_metrics_export: null
+
+# Exposes the Prometheus port (prometheus_export.port, 9090 by default)
+# as a real Service + ServiceMonitor, mirroring the pattern
+# deploy/helm/chart/values.yaml already uses for the edge-metrics
+# collector's own metrics (named port + serviceMonitor.enabled).
+service:
+  enabled: true
+
+serviceMonitor:
+  enabled: true
+  metrics:
+    endpoint:
+      interval: 5s

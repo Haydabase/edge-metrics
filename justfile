@@ -98,6 +98,7 @@ demo:
 
   helm repo add prometheus-community https://prometheus-community.github.io/helm-charts >/dev/null 2>&1 || true
   helm repo add grafana https://grafana.github.io/helm-charts >/dev/null 2>&1 || true
+  helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts >/dev/null 2>&1 || true
   helm repo update
 
   # additionalDataSources provisions Grafana's Loki datasource up front —
@@ -125,6 +126,16 @@ demo:
     -f deploy/helm/chart/values.yaml \
     -f deploy/helm/chart/otel-chart-overrides.yaml \
     -f deploy/helm/chart/otel-config.yaml \
+    --wait --timeout 10m
+
+  # OBI (eBPF auto-instrumentation) — a separate, parallel telemetry path
+  # from the log-derived edge metrics above. Attaches to the 5 demo
+  # backends in `applications` and scrapes RED metrics directly into
+  # Prometheus; does not touch the edge-metrics collector or pipeline.
+  helm upgrade --install obi open-telemetry/opentelemetry-ebpf-instrumentation \
+    --version 0.13.0 \
+    -n obi --create-namespace \
+    -f k8s/obi-values.yaml \
     --wait --timeout 10m
 
   kubectl apply -f k8s/gateway/gateway.yaml

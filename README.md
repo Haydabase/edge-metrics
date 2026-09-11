@@ -216,6 +216,17 @@ A parallel pipeline branches off the edge logs (via a `forward/edge_export` conn
 
 Loki only auto-indexes a fixed list of well-known OTel Resource attributes as stream labels (`service.name` among them); everything else needs to be named explicitly in Loki's own config to become an indexed label rather than unindexed structured metadata. The `transform/edge_export_labels` processor prepares bare-named log attributes for exactly the fields [k8s/loki-values.yaml](./k8s/loki-values.yaml)'s `limits_config.otlp_config.log_attributes` tells Loki to index, mirroring the label names `attributes/edge_metrics` already produces for Prometheus. In Grafana Explore, this makes queries like `{job="ingress_logs", service_name="payments-api", tls_type="mtls", status_code="500"}` possible.
 
+## OBI (eBPF RED metrics)
+
+Alongside the log-derived edge metrics pipeline above, the demo also runs [OpenTelemetry eBPF Instrumentation (OBI)](https://opentelemetry.io/docs/zero-code/obi/) as a DaemonSet (`k8s/obi-values.yaml`), which attaches eBPF probes directly to the nginx processes backing the five demo services in the `applications` namespace. This is a **separate, parallel telemetry path** — it does not touch `otel-collector-config.yaml` or the connector-chained pipelines described above.
+
+OBI needs no code changes to instrument nginx: it exports the standard OTel HTTP server histogram, scraped directly by `kube-prometheus-stack`'s Prometheus (via a Service + ServiceMonitor, not routed through the edge-metrics collector):
+
+- `http_server_request_duration_seconds` (`_count`/`_sum`/`_bucket`) — gives rate, errors (via `http_response_status_code`), and duration in one histogram.
+- Labels include `k8s_namespace_name`, `k8s_deployment_name`, `k8s_pod_name`, `http_route`, `http_request_method`, `http_response_status_code`. Prefer grouping by `k8s_deployment_name` over `service_name` — the latter is derived from the process executable name (`nginx`) for all five services, so it won't distinguish them.
+
+Don't conflate the two pipelines: the log-derived metrics (`http_edge_sli_total`, etc.) measure the edge/ingress layer (Cloudflare + Envoy Gateway), while OBI's metrics measure the backend nginx processes themselves.
+
 ## Demo
 
 This repo ships with a one-command local demo: a [kind](https://kind.sigs.k8s.io/) cluster running [Envoy Gateway](https://gateway.envoyproxy.io/), [kube-prometheus-stack](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack) (Prometheus + Grafana), [Grafana Loki](https://grafana.com/oss/loki/), this collector, and five trivial demo backend services (`payments-api`, `data-api`, `connections-api`, `payouts-api`, `auth-server`) registered via Gateway API `HTTPRoute`s.
