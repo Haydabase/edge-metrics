@@ -6,7 +6,7 @@ metadata:
   labels:
     grafana_dashboard: "1"
 data:
-  edge-metrics.json: |
+  edge-metrics.json: |-
     {
       "apiVersion": "dashboard.grafana.app/v2",
       "kind": "Dashboard",
@@ -649,6 +649,7 @@ data:
                   "$__all"
                 ]
               },
+              "allValue": ".*",
               "definition": "label_values(http_edge_sli_total,sub_domain)",
               "hide": "dontHide",
               "includeAll": true,
@@ -670,7 +671,14 @@ data:
               "regex": "",
               "regexApplyTo": "value",
               "skipUrlSync": false,
-              "sort": "disabled"
+              "sort": "disabled",
+              "staticOptions": [
+                {
+                  "text": "NONE",
+                  "value": ""
+                }
+              ],
+              "staticOptionsOrder": "after"
             }
           },
           {
@@ -685,6 +693,7 @@ data:
                   "$__all"
                 ]
               },
+              "allValue": ".*",
               "definition": "label_values(http_edge_sli_total,product)",
               "hide": "dontHide",
               "includeAll": true,
@@ -706,7 +715,14 @@ data:
               "regex": "",
               "regexApplyTo": "value",
               "skipUrlSync": false,
-              "sort": "disabled"
+              "sort": "disabled",
+              "staticOptions": [
+                {
+                  "text": "NONE",
+                  "value": ""
+                }
+              ],
+              "staticOptionsOrder": "after"
             }
           },
           {
@@ -721,6 +737,7 @@ data:
                   "$__all"
                 ]
               },
+              "allValue": ".*",
               "definition": "label_values(http_edge_sli_total,service_name)",
               "hide": "dontHide",
               "includeAll": true,
@@ -742,7 +759,14 @@ data:
               "regex": "",
               "regexApplyTo": "value",
               "skipUrlSync": false,
-              "sort": "disabled"
+              "sort": "disabled",
+              "staticOptions": [
+                {
+                  "text": "NONE",
+                  "value": ""
+                }
+              ],
+              "staticOptionsOrder": "after"
             }
           }
         ]
@@ -1818,6 +1842,7 @@ data:
                   "$__all"
                 ]
               },
+              "allValue": ".*",
               "definition": "label_values({__name__=~\"http_server_request_duration_seconds_count|http_edge_request_duration_seconds_count\"}, service_name)",
               "hide": "dontHide",
               "includeAll": true,
@@ -1839,7 +1864,14 @@ data:
               "regex": "",
               "regexApplyTo": "value",
               "skipUrlSync": false,
-              "sort": "disabled"
+              "sort": "disabled",
+              "staticOptions": [
+                {
+                  "text": "NONE",
+                  "value": ""
+                }
+              ],
+              "staticOptionsOrder": "after"
             }
           }
         ]

@@ -1058,6 +1058,7 @@
               "$__all"
             ]
           },
+          "allValue": ".*",
           "definition": "label_values({__name__=~\"http_server_request_duration_seconds_count|http_edge_request_duration_seconds_count\"}, service_name)",
           "hide": "dontHide",
           "includeAll": true,
@@ -1079,7 +1080,14 @@
           "regex": "",
           "regexApplyTo": "value",
           "skipUrlSync": false,
-          "sort": "disabled"
+          "sort": "disabled",
+          "staticOptions": [
+            {
+              "text": "NONE",
+              "value": ""
+            }
+          ],
+          "staticOptionsOrder": "after"
         }
       }
     ]

@@ -640,6 +640,7 @@
               "$__all"
             ]
           },
+          "allValue": ".*",
           "definition": "label_values(http_edge_sli_total,sub_domain)",
           "hide": "dontHide",
           "includeAll": true,
@@ -661,7 +662,14 @@
           "regex": "",
           "regexApplyTo": "value",
           "skipUrlSync": false,
-          "sort": "disabled"
+          "sort": "disabled",
+          "staticOptions": [
+            {
+              "text": "NONE",
+              "value": ""
+            }
+          ],
+          "staticOptionsOrder": "after"
         }
       },
       {
@@ -676,6 +684,7 @@
               "$__all"
             ]
           },
+          "allValue": ".*",
           "definition": "label_values(http_edge_sli_total,product)",
           "hide": "dontHide",
           "includeAll": true,
@@ -697,7 +706,14 @@
           "regex": "",
           "regexApplyTo": "value",
           "skipUrlSync": false,
-          "sort": "disabled"
+          "sort": "disabled",
+          "staticOptions": [
+            {
+              "text": "NONE",
+              "value": ""
+            }
+          ],
+          "staticOptionsOrder": "after"
         }
       },
       {
@@ -712,6 +728,7 @@
               "$__all"
             ]
           },
+          "allValue": ".*",
           "definition": "label_values(http_edge_sli_total,service_name)",
           "hide": "dontHide",
           "includeAll": true,
@@ -733,7 +750,14 @@
           "regex": "",
           "regexApplyTo": "value",
           "skipUrlSync": false,
-          "sort": "disabled"
+          "sort": "disabled",
+          "staticOptions": [
+            {
+              "text": "NONE",
+              "value": ""
+            }
+          ],
+          "staticOptionsOrder": "after"
         }
       }
     ]
