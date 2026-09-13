@@ -1,0 +1,86 @@
+# Applied separately via `just demo-new-app` (not part of `just demo`'s
+# `kubectl apply -f k8s/demo-app/`), so it can be added live mid-demo to show
+# the watcher (`just demo-watcher`) picking up a brand-new HTTPRoute without a
+# full redeploy.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: transactions-api
+  namespace: applications
+  labels:
+    app.kubernetes.io/name: transactions-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: transactions-api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: transactions-api
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.27-alpine
+          env:
+            - name: SERVICE_NAME
+              value: transactions-api
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/templates/default.conf.template
+              subPath: default.conf.template
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 50m
+              memory: 64Mi
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: demo-app-nginx-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: transactions-api
+  namespace: applications
+  labels:
+    app.kubernetes.io/name: transactions-api
+spec:
+  selector:
+    app.kubernetes.io/name: transactions-api
+  ports:
+    - port: 80
+      targetPort: 8080
+---
+# Gateway API HTTPRoute has no path-templating syntax, so the {some-uuid}
+# merchant account segment is expressed as a RegularExpression match rather
+# than a literal path - this also exercises the RegularExpression branch of
+# generate-categorize-rules.sh, which none of k8s/demo-app/'s PathPrefix
+# routes do.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: transactions-api
+  namespace: applications
+  annotations:
+    sli.paybybank.example/product: MerchantAccounts
+spec:
+  parentRefs:
+    - name: paybybank-gw
+      namespace: api-gateway
+  hostnames:
+    - api.paybybank.example
+    - api.mtls.paybybank.example
+  rules:
+    - matches:
+        - path:
+            type: RegularExpression
+            value: ^/merchant-accounts/[^/]+/transactions
+      backendRefs:
+        - name: transactions-api
+          port: 80

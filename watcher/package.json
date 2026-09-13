@@ -1,0 +1,15 @@
+{
+  "name": "edge-metrics-watcher",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Watches Gateway API HTTPRoutes and keeps the edge-metrics collector's transform/categorize processor in sync live.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@kubernetes/client-node": "^1.0.0",
+    "js-yaml": "^4.1.0"
+  }
+}

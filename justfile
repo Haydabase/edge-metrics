@@ -72,6 +72,26 @@ check-gen-categorize:
 test:
   bats --jobs 6 tests
 
+watcher-build:
+  docker build -f watcher/Dockerfile -t edge-metrics-watcher:local .
+
+# Builds and deploys the in-cluster HTTPRoute watcher (see watcher/ and
+# k8s/watcher/), which keeps the *running* collector's transform/categorize
+# processor live-synced with HTTPRoute changes. Separate from `just demo`:
+# it's an opt-in addition to an already-running demo, not part of the
+# default bootstrap. Requires `just demo` to have already created the
+# `edge-metrics` namespace/collector.
+demo-watcher: watcher-build
+  kind load docker-image edge-metrics-watcher:local --name edge-metrics
+  kubectl apply -f k8s/watcher/
+
+# Applies an extra demo backend (transactions-api) not included in `just
+# demo`'s k8s/demo-app/ set, so it can be added live mid-demo - e.g. to show
+# `just demo-watcher` picking up a brand-new HTTPRoute. See
+# k8s/demo-scenarios/transactions-api.yaml.
+demo-new-app:
+  kubectl apply -f k8s/demo-scenarios/transactions-api.yaml
+
 # Bring up the full local demo: kind cluster, Envoy Gateway, kube-prometheus-stack,
 # Loki, the collector chart, and the demo apps/routes. Uses the config already
 # checked into this repo (otel-collector-config-categorize.yaml, otel-config.yaml)

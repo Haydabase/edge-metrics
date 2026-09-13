@@ -142,7 +142,14 @@
     // Known paths per sub-domain, for the Path field's autocomplete suggestions.
     // The first entry in each list is that sub-domain's default path.
     const KNOWN_PATHS = {
-      api: ["/payments", "/connected-accounts", "/data-connections", "/payouts"],
+      api: [
+        "/payments",
+        "/connected-accounts",
+        "/data-connections",
+        "/payouts",
+        // 404s until `just demo-new-app` applies its HTTPRoute - see README.md.
+        "/merchant-accounts/11111111-1111-1111-1111-111111111111/transactions",
+      ],
       auth: ["/connect/token"],
     };
 

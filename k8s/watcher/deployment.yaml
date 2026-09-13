@@ -1,0 +1,31 @@
+# Built and loaded into the kind cluster by `just demo-watcher` - never
+# pushed to a registry, hence imagePullPolicy: Never.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: edge-metrics-watcher
+  namespace: edge-metrics
+  labels:
+    app.kubernetes.io/name: edge-metrics-watcher
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: edge-metrics-watcher
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: edge-metrics-watcher
+    spec:
+      serviceAccountName: edge-metrics-watcher
+      containers:
+        - name: watcher
+          image: edge-metrics-watcher:local
+          imagePullPolicy: Never
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi

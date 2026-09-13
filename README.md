@@ -315,6 +315,26 @@ By default only `paybybank.example` (production) hostnames are emitted. Override
 
 Warnings for any HTTPRoute entry whose app label can't be resolved are written to stderr; those rows are dropped from the output.
 
+### Live-syncing the collector to HTTPRoute changes during a demo
+
+The steps above (`just gen-categorize && just gen`) regenerate the *checked-in* `otel-collector-config-categorize.yaml`/`otel-config.yaml` files - what a fresh `just demo` bootstraps with - and still need a human to run them and redeploy.
+
+For keeping an *already-running* demo's collector live-synced with `HTTPRoute` edits without doing that manually every time, `just demo-watcher` deploys an in-cluster watcher (see [watcher/](./watcher) and [k8s/watcher/](./k8s/watcher)) that:
+
+- Watches Gateway API `HTTPRoute`s cluster-wide via the Kubernetes watch API (`@kubernetes/client-node`'s `Informer`).
+- On any change, reruns `scripts/generate-categorize-rules.sh` and live-patches just the `transform/categorize` key of the collector's ConfigMap, then restarts the collector Deployment to pick it up.
+- Skips the patch + restart entirely if the regenerated rules are unchanged.
+
+It's a separate, opt-in step - run `just demo` first, then `just demo-watcher`. It is **not** a replacement for `just gen-categorize && just gen`: the watcher never writes back to the git-tracked YAML files, and the next `helm upgrade`/`just demo` will re-render the collector's ConfigMap wholesale and silently overwrite the watcher's live patch until the next `HTTPRoute` change fires.
+
+Try it end-to-end:
+```bash
+just demo
+just demo-watcher
+just demo-new-app   # applies k8s/demo-scenarios/transactions-api.yaml live
+```
+Watch `kubectl logs -n edge-metrics -l app.kubernetes.io/name=edge-metrics-watcher -f` to see it pick up the new route, patch the ConfigMap, and restart the collector - all without touching `otel-collector-config-categorize.yaml` or running `helm upgrade` by hand.
+
 ### Automated Testing
 
 Automated integration tests verify that the collector correctly processes logs and generates metrics.
