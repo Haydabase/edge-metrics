@@ -28,6 +28,13 @@
   </fieldset>
 
   <fieldset>
+    <legend>Custom Request</legend>
+    <button id="send">Send request</button>
+    <button id="customToggle">▶ Play</button>
+    <p id="customStatus" class="hint">Not running.</p>
+  </fieldset>
+
+  <fieldset id="routeSection">
     <legend>Route</legend>
     <label>Transport</label>
     <label style="display: inline-block; margin-right: 1.5rem;">
@@ -48,11 +55,9 @@
     <label for="path">Path</label>
     <input type="text" id="path" list="pathOptions" />
     <datalist id="pathOptions"></datalist>
-
-    <button id="send">Send request</button>
   </fieldset>
 
-  <fieldset>
+  <fieldset id="modeSection">
     <legend>Request mode</legend>
     <label style="display: inline-block; margin-right: 1.5rem;">
       <input type="radio" name="mode" id="modeResponse" value="response" checked />
@@ -131,6 +136,8 @@
     const timeoutMsInput = document.getElementById("timeoutMs");
     const sendButton = document.getElementById("send");
     const result = document.getElementById("result");
+    const routeSection = document.getElementById("routeSection");
+    const modeSection = document.getElementById("modeSection");
 
     // Known paths per sub-domain, for the Path field's autocomplete suggestions.
     // The first entry in each list is that sub-domain's default path.
@@ -193,8 +200,8 @@
     updateModeVisibility();
 
     // Background simulation - round-robins plain 200 requests across every
-    // known domain/path/transport combo, independent of the manual Route and
-    // Request mode controls above (and of #result, which those still use).
+    // known domain/path/transport combo, independent of the Custom Request
+    // controls below (and of #result, which those still use).
     const simToggleButton = document.getElementById("simToggle");
     const simStatus = document.getElementById("simStatus");
     let simTimer = null;
@@ -228,7 +235,10 @@
       }
     });
 
-    sendButton.addEventListener("click", async () => {
+    // Builds and sends the currently-configured custom request (Route +
+    // Request mode + Cluster Response/Timeout Options, read live), shared by
+    // the one-shot "Send request" button and the Custom Request repeat loop.
+    async function sendCustomRequest() {
       const subdomain = subdomainSelect.value + (transportMtlsRadio.checked ? ".mtls" : "");
       const trimmedPath = pathInput.value.trim();
       const path = trimmedPath.startsWith("/") ? trimmedPath : `/${trimmedPath}`;
@@ -255,10 +265,62 @@
         }
       }
 
+      const res = await fetch(`/${subdomain}${path}`, { method: "GET", headers });
+      return await res.json();
+    }
+
+    // Locks the sections that define the custom request while the repeat
+    // loop is playing, so what's repeating is always exactly what's visible.
+    // Background Simulation is intentionally left alone — it's independent
+    // and can run at the same time.
+    function setCustomRequestSectionsDisabled(disabled) {
+      routeSection.disabled = disabled;
+      modeSection.disabled = disabled;
+      responseOptions.disabled = disabled;
+      timeoutOptions.disabled = disabled;
+    }
+
+    const customToggleButton = document.getElementById("customToggle");
+    const customStatus = document.getElementById("customStatus");
+    let customTimer = null;
+    let customCount = 0;
+
+    async function customTick() {
+      customCount++;
+      try {
+        const summary = await sendCustomRequest();
+        // Pause may have fired while this request was in flight — don't let
+        // a late-resolving tick clobber the "Paused" status it already set.
+        if (!customTimer) return;
+        const status = summary.simulatedTimeout
+          ? `simulated timeout (${summary.delayMs}ms)`
+          : (summary.envoyStatus ?? summary.error ?? "?");
+        customStatus.textContent = `Running — ${customCount} sent — last: HTTP ${status}`;
+      } catch (err) {
+        if (!customTimer) return;
+        customStatus.textContent = `Running — ${customCount} sent — last: failed (${err.message})`;
+      }
+    }
+
+    customToggleButton.addEventListener("click", () => {
+      if (customTimer) {
+        clearInterval(customTimer);
+        customTimer = null;
+        customToggleButton.textContent = "▶ Play";
+        customStatus.textContent = `Paused — ${customCount} sent.`;
+        setCustomRequestSectionsDisabled(false);
+      } else {
+        customToggleButton.textContent = "⏸ Pause";
+        setCustomRequestSectionsDisabled(true);
+        customTick();
+        customTimer = setInterval(customTick, 200);
+      }
+    });
+
+    sendButton.addEventListener("click", async () => {
       result.textContent = "Sending...";
       try {
-        const res = await fetch(`/${subdomain}${path}`, { method: "GET", headers });
-        const summary = await res.json();
+        const summary = await sendCustomRequest();
 
         if (summary.simulatedTimeout) {
           result.textContent = [
