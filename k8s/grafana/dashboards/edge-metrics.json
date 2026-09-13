@@ -460,7 +460,7 @@
                       "kind": "DataQuery",
                       "spec": {
                         "editorMode": "code",
-                        "expr": "sum by(status_code) (increase(http_edge_request_duration_seconds_count{sub_domain=~\"$sub_domain\", product=~\"$product\", service_name=~\"$service_name\"}[$__range]))",
+                        "expr": "sum by(http_response_status_code) (increase(http_edge_request_duration_seconds_count{sub_domain=~\"$sub_domain\", product=~\"$product\", service_name=~\"$service_name\"}[$__range]))",
                         "legendFormat": "{{label_name}}",
                         "range": true
                       },

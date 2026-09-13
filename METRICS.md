@@ -38,7 +38,7 @@ Labels:
 | `sub_domain`   | `pbb.sub_domain`            |
 | `product`      | `pbb.product`               |
 | `service_name` | `pbb.service.name`          |
-| `status_code`  | `http.response.status_code` |
+| `http_response_status_code` | `http.response.status_code` |
 
 This histogram can be used to alert on latency spikes or specific status codes.
 
@@ -55,6 +55,6 @@ Labels:
 | `sub_domain`   | `pbb.sub_domain`            |
 | `product`      | `pbb.product`               |
 | `service_name` | `pbb.service.name`          |
-| `status_code`  | `http.response.status_code` |
+| `http_response_status_code` | `http.response.status_code` |
 
 This histogram can be used to alert on latency spikes or specific status codes.

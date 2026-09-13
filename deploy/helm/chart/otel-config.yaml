@@ -245,16 +245,16 @@ opentelemetry-collector:
             from_attribute: error.pbb.sli_type
           - key: error.pbb.sli_type
             action: delete
-          - key: status_code
-            action: upsert
-            from_attribute: http.response.status_code
-          - key: http.response.status_code
-            action: delete
           - key: client_id
             action: upsert
             from_attribute: pbb.client.id
           - key: pbb.client.id
             action: delete
+            # http.response.status_code is intentionally left un-renamed here
+            # (unlike the fields above) — the prometheus exporter's
+            # translation_strategy already escapes its dot to an underscore at
+            # export time, producing the standard http_response_status_code label
+            # (matching OBI's own label of the same name) with no manual alias.
       transform/edge_metrics:
         metric_statements:
           # Hack to get prometheus exporter to not drop noncontiguous deltas

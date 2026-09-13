@@ -1,3 +1,3 @@
 http_edge_sli_total{app="",domain="api.paybybank.example",product="",service_name="",sli_error_type="",sub_domain="api",tls_type="non-mtls"}
-http_edge_request_duration_seconds_count{app="",domain="api.paybybank.example",product="",service_name="",status_code="200",sub_domain="api",tls_type="non-mtls"}
-http_edge_paybybank_latency_seconds_count{app="",domain="api.paybybank.example",product="",service_name="",status_code="200",sub_domain="api",tls_type="non-mtls"}
+http_edge_request_duration_seconds_count{app="",domain="api.paybybank.example",http_response_status_code="200",product="",service_name="",sub_domain="api",tls_type="non-mtls"}
+http_edge_paybybank_latency_seconds_count{app="",domain="api.paybybank.example",http_response_status_code="200",product="",service_name="",sub_domain="api",tls_type="non-mtls"}

@@ -179,8 +179,8 @@ OTLP JSON format with enriched attributes e.g.:
 Prometheus metric lines (without counter values):
 ```
 http_edge_sli_total{app="auth-server",domain="auth.paybybank.example",product="Auth",service_name="auth-server",sli_error_type="",sub_domain="auth",tls_type="non-mtls"}
-http_edge_request_duration_seconds_count{app="auth-server",domain="auth.paybybank.example",product="Auth",service_name="auth-server",status_code="200",sub_domain="auth",tls_type="non-mtls"}
-http_edge_paybybank_latency_seconds_count{app="auth-server",domain="auth.paybybank.example",product="Auth",service_name="auth-server",status_code="200",sub_domain="auth",tls_type="non-mtls"}
+http_edge_request_duration_seconds_count{app="auth-server",domain="auth.paybybank.example",http_response_status_code="200",product="Auth",service_name="auth-server",sub_domain="auth",tls_type="non-mtls"}
+http_edge_paybybank_latency_seconds_count{app="auth-server",domain="auth.paybybank.example",http_response_status_code="200",product="Auth",service_name="auth-server",sub_domain="auth",tls_type="non-mtls"}
 ```
 
 ## Adding New Tests
