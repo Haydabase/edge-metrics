@@ -24,8 +24,15 @@ spec:
           imagePullPolicy: Never
           resources:
             requests:
-              cpu: 10m
+              cpu: 50m
               memory: 64Mi
             limits:
-              cpu: 100m
+              # tsx (used since the categorize logic moved to TS - see
+              # categorize/) has real one-time startup CPU cost (spinning up
+              # its esbuild transform service), unlike plain `node` before
+              # it. Confirmed live via /sys/fs/cgroup/cpu.stat that even
+              # 500m gets ~85% of periods throttled on a loaded dev machine,
+              # stretching a ~1s startup into 10+ minutes - so this needs
+              # real headroom, not just a bump.
+              cpu: "2"
               memory: 128Mi

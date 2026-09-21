@@ -46,7 +46,8 @@ check-gen:
   echo "✓ otel-config.yaml is up to date!"
 
 gen-categorize dest="otel-collector-config-categorize.yaml":
-  ./scripts/generate-categorize-rules.sh "{{dest}}"
+  npm install --prefix scripts --no-audit --no-fund --silent
+  npx --prefix scripts tsx scripts/generate-categorize-rules.ts "{{dest}}"
 
 check-gen-categorize:
   #!/usr/bin/env bash

@@ -1,0 +1,14 @@
+{
+  "name": "edge-metrics-scripts",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Dev-machine CLIs for edge-metrics, sharing core logic with watcher/ via ../categorize.",
+  "dependencies": {
+    "@kubernetes/client-node": "^1.0.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}
