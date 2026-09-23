@@ -8,7 +8,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install test dependencies
         run: |
           sudo wget -qO /usr/local/bin/jd https://github.com/josephburnett/jd/releases/download/v2.3.1/jd-amd64-linux
@@ -24,7 +24,7 @@ jobs:
   check-generated:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install just
         run: curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | sudo bash -s -- --to /usr/local/bin
       - name: Install yq
