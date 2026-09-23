@@ -57,7 +57,14 @@ setup_file() {
 
   echo "[$CONTAINER_NAME] Config merged successfully" >&3
 
-  COLLECTOR_IMAGE="otel/opentelemetry-collector-contrib:latest"
+  HELM_VALUES="$PROJECT_ROOT/deploy/helm/chart/values.yaml"
+  COLLECTOR_REPOSITORY=$(yq '.opentelemetry-collector.image.repository' "$HELM_VALUES")
+  COLLECTOR_TAG=$(yq '.opentelemetry-collector.image.tag' "$HELM_VALUES")
+  if [[ -z "$COLLECTOR_REPOSITORY" || "$COLLECTOR_REPOSITORY" == "null" || -z "$COLLECTOR_TAG" || "$COLLECTOR_TAG" == "null" ]]; then
+    echo "ERROR: opentelemetry-collector.image.repository/tag missing from $HELM_VALUES" >&3
+    return 1
+  fi
+  COLLECTOR_IMAGE="${COLLECTOR_REPOSITORY}:${COLLECTOR_TAG}"
   echo "[$CONTAINER_NAME] Starting OTel Collector (CF=$CF_PORT, Envoy=$ENVOY_PORT, Prom=$PROM_PORT)" >&3
 
   # Start collector in Docker with unique ports and container name

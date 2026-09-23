@@ -4,6 +4,7 @@ global:
 opentelemetry-collector:
   image:
     repository: otel/opentelemetry-collector-contrib
+    tag: "0.143.0"
 
   serviceAccount:
     create: true
